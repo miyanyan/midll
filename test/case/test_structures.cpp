@@ -1,37 +1,31 @@
-// Copyright 2014 Renato Tegon Forti, Antony Polukhin.
-// Copyright Antony Polukhin, 2015-2024.
-//
-// Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt
-// or copy at http://www.boost.org/LICENSE_1_0.txt)
+#include <iostream>
 
-// For more information, see http://www.boost.org
+#include <gtest/gtest.h>
 
-#include <boost/dll/detail/elf_info.hpp>
-#include <boost/dll/detail/pe_info.hpp>
-#include <boost/dll/detail/macho_info.hpp>
-#include <boost/core/lightweight_test.hpp>
-#include <boost/predef/os.h>
+#include <midll/config.hpp>
+#include <midll/detail/elf_info.hpp>
+#include <midll/detail/macho_info.hpp>
+#include <midll/detail/pe_info.hpp>
 
-#if BOOST_OS_WINDOWS
-#   include <windows.h>
-#elif BOOST_OS_MACOS || BOOST_OS_IOS
-#   include <mach-o/loader.h>
-#   include <mach-o/nlist.h>
-#elif BOOST_OS_QNX
+#if defined(MIDLL_OS_WINDOWS)
+#    include <windows.h>
+#elif defined(MIDLL_OS_MACOS || MIDLL_OS_IOS)
+#    include <mach-o/loader.h>
+#    include <mach-o/nlist.h>
+#elif defined(MIDLL_OS_QNX)
 // QNX's copy of <elf.h> and <link.h> reside in sys folder
-#   include <sys/elf.h>
+#    include <sys/elf.h>
 #else
-    #include <elf.h>
+#    include <elf.h>
 #endif
 
-namespace dd = boost::dll::detail;
+namespace dd = midll::detail;
 
-template <class T1, class T2>
-inline std::size_t get_offset(const T1& v1, const T2& v2) {
+template<class T1, class T2>
+std::size_t get_offset(const T1& v1, const T2& v2)
+{
     const unsigned char* p1 = reinterpret_cast<const unsigned char*>(&v1);
     const unsigned char* p2 = reinterpret_cast<const unsigned char*>(&v2);
-
     if (p1 < p2) {
         return static_cast<std::size_t>(p2 - p1);
     }
@@ -39,15 +33,13 @@ inline std::size_t get_offset(const T1& v1, const T2& v2) {
     return static_cast<std::size_t>(p1 - p2);
 }
 
-#define CHECK_FIELD(Field)                                              \
-    static_assert(sizeof(v1.Field) == sizeof(v2.Field), "");          \
-    BOOST_TEST(get_offset(v1, v1.Field) == get_offset(v2, v2.Field))   \
-    /**/
+#define CHECK_FIELD(Field)                             \
+    static_assert(sizeof(v1.Field) == sizeof(v2.Field), ""); \
+    EXPECT_TRUE(get_offset(v1, v1.Field) == get_offset(v2, v2.Field));
 
-
-// ELF structures
-template <class T1, class T2>
-void elf_header_checks(const T1& v1, const T2& v2) {
+template<class T1, class T2>
+void elf_header_checks(const T1& v1, const T2& v2)
+{
     static_assert(sizeof(T1) == sizeof(T2), "");
 
     CHECK_FIELD(e_ident);
@@ -66,8 +58,9 @@ void elf_header_checks(const T1& v1, const T2& v2) {
     CHECK_FIELD(e_shstrndx);
 }
 
-template <class T1, class T2>
-void elf_sheader_checks(const T1& v1, const T2& v2) {
+template<class T1, class T2>
+void elf_sheader_checks(const T1& v1, const T2& v2)
+{
     static_assert(sizeof(T1) == sizeof(T2), "");
 
     CHECK_FIELD(sh_name);
@@ -82,8 +75,9 @@ void elf_sheader_checks(const T1& v1, const T2& v2) {
     CHECK_FIELD(sh_entsize);
 }
 
-template <class T1, class T2>
-void elf_sym_header_checks(const T1& v1, const T2& v2) {
+template<class T1, class T2>
+void elf_sym_header_checks(const T1& v1, const T2& v2)
+{
     static_assert(sizeof(T1) == sizeof(T2), "");
 
     CHECK_FIELD(st_name);
@@ -94,10 +88,10 @@ void elf_sym_header_checks(const T1& v1, const T2& v2) {
     CHECK_FIELD(st_shndx);
 }
 
-
 // PE structures
-template <class T>
-void generic_header_check(const T& v1, const dd::IMAGE_DOS_HEADER_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::IMAGE_DOS_HEADER_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(e_magic);
@@ -121,8 +115,9 @@ void generic_header_check(const T& v1, const dd::IMAGE_DOS_HEADER_& v2) {
     CHECK_FIELD(e_lfanew);
 }
 
-template <class T>
-void generic_header_check(const T& v1, const dd::IMAGE_FILE_HEADER_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::IMAGE_FILE_HEADER_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(Machine);
@@ -134,18 +129,20 @@ void generic_header_check(const T& v1, const dd::IMAGE_FILE_HEADER_& v2) {
     CHECK_FIELD(Characteristics);
 }
 
-template <class T>
-void generic_header_check(const T& v1, const dd::IMAGE_DATA_DIRECTORY_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::IMAGE_DATA_DIRECTORY_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(VirtualAddress);
     CHECK_FIELD(Size);
 }
 
-template <class T>
-void generic_header_check(const T& v1, const dd::IMAGE_EXPORT_DIRECTORY_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::IMAGE_EXPORT_DIRECTORY_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
+
     CHECK_FIELD(Characteristics);
     CHECK_FIELD(TimeDateStamp);
     CHECK_FIELD(MajorVersion);
@@ -159,11 +156,11 @@ void generic_header_check(const T& v1, const dd::IMAGE_EXPORT_DIRECTORY_& v2) {
     CHECK_FIELD(AddressOfNameOrdinals);
 }
 
-
-template <class T>
-void generic_header_check(const T& v1, const dd::IMAGE_SECTION_HEADER_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::IMAGE_SECTION_HEADER_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
+
     CHECK_FIELD(Name);
     CHECK_FIELD(VirtualAddress);
     CHECK_FIELD(SizeOfRawData);
@@ -175,10 +172,11 @@ void generic_header_check(const T& v1, const dd::IMAGE_SECTION_HEADER_& v2) {
     CHECK_FIELD(Characteristics);
 }
 
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::IMAGE_OPTIONAL_HEADER_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::IMAGE_OPTIONAL_HEADER_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
+
     CHECK_FIELD(Magic);
     CHECK_FIELD(MajorLinkerVersion);
     CHECK_FIELD(MinorLinkerVersion);
@@ -210,16 +208,18 @@ void generic_header_check(const T& v1, const dd::IMAGE_OPTIONAL_HEADER_template<
     CHECK_FIELD(DataDirectory);
 }
 
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::IMAGE_NT_HEADERS_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::IMAGE_NT_HEADERS_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(Signature);
     CHECK_FIELD(FileHeader);
     CHECK_FIELD(OptionalHeader);
 }
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::mach_header_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::mach_header_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(magic);
@@ -228,79 +228,81 @@ void generic_header_check(const T& v1, const dd::mach_header_template<AddrT>& v2
     CHECK_FIELD(filetype);
     CHECK_FIELD(ncmds);
     CHECK_FIELD(sizeofcmds);
-    //CHECK_FIELD(flags);
+    // CHECK_FIELD(flags);
 }
 
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::segment_command_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::segment_command_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
-    CHECK_FIELD(cmd);          
-    CHECK_FIELD(cmdsize);      
-    CHECK_FIELD(segname);  
-    CHECK_FIELD(vmaddr);       
-    CHECK_FIELD(vmsize);       
+    CHECK_FIELD(cmd);
+    CHECK_FIELD(cmdsize);
+    CHECK_FIELD(segname);
+    CHECK_FIELD(vmaddr);
+    CHECK_FIELD(vmsize);
     CHECK_FIELD(fileoff);
-    CHECK_FIELD(filesize);     
-    CHECK_FIELD(maxprot);      
-    CHECK_FIELD(initprot);     
-    CHECK_FIELD(nsects);       
-    CHECK_FIELD(flags);        
+    CHECK_FIELD(filesize);
+    CHECK_FIELD(maxprot);
+    CHECK_FIELD(initprot);
+    CHECK_FIELD(nsects);
+    CHECK_FIELD(flags);
 }
 
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::section_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::section_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
 
     CHECK_FIELD(sectname);
-    CHECK_FIELD(segname); 
-    CHECK_FIELD(addr);    
-    CHECK_FIELD(size);    
-    CHECK_FIELD(offset);  
-    CHECK_FIELD(align);   
-    CHECK_FIELD(reloff);  
-    CHECK_FIELD(nreloc);  
-    CHECK_FIELD(flags);   
-    //CHECK_FIELD(reserved vs reserveed1&reserved2);
+    CHECK_FIELD(segname);
+    CHECK_FIELD(addr);
+    CHECK_FIELD(size);
+    CHECK_FIELD(offset);
+    CHECK_FIELD(align);
+    CHECK_FIELD(reloff);
+    CHECK_FIELD(nreloc);
+    CHECK_FIELD(flags);
+    // CHECK_FIELD(reserved vs reserveed1&reserved2);
 }
 
-template <class T>
-void generic_header_check(const T& v1, const dd::symtab_command_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::symtab_command_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
-    CHECK_FIELD(cmd);    
+
+    CHECK_FIELD(cmd);
     CHECK_FIELD(cmdsize);
-    CHECK_FIELD(symoff); 
-    CHECK_FIELD(nsyms);  
-    CHECK_FIELD(stroff); 
+    CHECK_FIELD(symoff);
+    CHECK_FIELD(nsyms);
+    CHECK_FIELD(stroff);
     CHECK_FIELD(strsize);
 }
 
-template <class T, class AddrT>
-void generic_header_check(const T& v1, const dd::nlist_template<AddrT>& v2) {
+template<class T, class AddrT>
+void generic_header_check(const T& v1, const dd::nlist_template<AddrT>& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
-    //CHECK_FIELD(n_strx);
+
+    // CHECK_FIELD(n_strx);
     CHECK_FIELD(n_type);
     CHECK_FIELD(n_sect);
     CHECK_FIELD(n_desc);
     CHECK_FIELD(n_value);
 }
 
-template <class T>
-void generic_header_check(const T& v1, const dd::load_command_& v2) {
+template<class T>
+void generic_header_check(const T& v1, const dd::load_command_& v2)
+{
     static_assert(sizeof(v1) == sizeof(v2), "");
-    
-    CHECK_FIELD(cmd);    
+
+    CHECK_FIELD(cmd);
     CHECK_FIELD(cmdsize);
 }
 
-
-
-// Unit Tests
-int main(int /*argc*/, char* /*argv*/[]) {
-
-#if BOOST_OS_WINDOWS
+TEST(test_structures, structures)
+{
+#if defined(MIDLL_OS_WINDOWS)
     generic_header_check(::IMAGE_DOS_HEADER(), dd::IMAGE_DOS_HEADER_());
     generic_header_check(::IMAGE_FILE_HEADER(), dd::IMAGE_FILE_HEADER_());
     generic_header_check(::IMAGE_DATA_DIRECTORY(), dd::IMAGE_DATA_DIRECTORY_());
@@ -310,7 +312,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
     generic_header_check(::IMAGE_OPTIONAL_HEADER64(), dd::IMAGE_OPTIONAL_HEADER64_());
     generic_header_check(::IMAGE_NT_HEADERS32(), dd::IMAGE_NT_HEADERS32_());
     generic_header_check(::IMAGE_NT_HEADERS64(), dd::IMAGE_NT_HEADERS64_());
-#elif BOOST_OS_MACOS || BOOST_OS_IOS
+#elif defined(MIDLL_OS_MACOS) || defined(MIDLL_OS_IOS)
     generic_header_check(::mach_header(), dd::mach_header_32_());
     generic_header_check(::mach_header_64(), dd::mach_header_64_());
 
@@ -337,8 +339,5 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     elf_sym_header_checks(::Elf32_Sym(), dd::Elf32_Sym_());
     elf_sym_header_checks(::Elf64_Sym(), dd::Elf64_Sym_());
-#endif 
-
-    return boost::report_errors();
+#endif
 }
-
