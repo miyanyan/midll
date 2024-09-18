@@ -134,14 +134,14 @@ namespace midll
         {                                                                \
         extern "C" MIDLL_SYMBOL_EXPORT const void *AliasName;            \
         } /* namespace _autoaliases */                                   \
-          /**/
+        /**/
 
 #    define MIDLL_AUTO_ALIAS(FunctionOrVar)                       \
         namespace _autoaliases                                    \
         {                                                         \
         extern "C" MIDLL_SYMBOL_EXPORT const void *FunctionOrVar; \
         } /* namespace _autoaliases */                            \
-          /**/
+        /**/
 #else
 // Note: we can not use `aggressive_ptr_cast` here, because in that case GCC applies
 // different permissions to the section and it causes Segmentation fault.
@@ -172,7 +172,7 @@ namespace midll
         MIDLL_SELECTANY const void *AliasName =                                         \
             reinterpret_cast<const void *>(reinterpret_cast<intptr_t>(&FunctionOrVar)); \
         } /* namespace _autoaliases */                                                  \
-          /**/
+        /**/
 
 /*!
  * \brief Exports variable or function with unmangled alias name.
@@ -213,7 +213,7 @@ namespace midll
         extern "C" MIDLL_SYMBOL_EXPORT const void *FunctionOrVar;                                     \
         MIDLL_SECTION(midll, read) MIDLL_SELECTANY const void *FunctionOrVar = dummy_##FunctionOrVar; \
         } /* namespace _autoaliases */                                                                \
-          /**/
+        /**/
 
 #endif
 
