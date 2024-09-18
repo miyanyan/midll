@@ -20,5 +20,5 @@ jobs:
 
     - name: Run clang-format
       run: |
-        find include src -name '*.h' -o -name '*.cc' |  xargs clang-format -i -style=file -fallback-style=none
+        find include src -name '*.h' -o -name '*.hpp' -o -name '*.cpp' |  xargs clang-format -i -style=file -fallback-style=none
         git diff --exit-code
