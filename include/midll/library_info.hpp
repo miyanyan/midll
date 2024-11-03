@@ -63,7 +63,7 @@ private:
 
     static void throw_if_in_macos()
     {
-#if defined(BOOST_OS_MACOS) || defined(BOOST_OS_IOS)
+#if defined(MIDLL_OS_MACOS) || defined(MIDLL_OS_IOS)
         throw std::runtime_error("Not native format: not an Mach-O binary");
 #endif
     }
